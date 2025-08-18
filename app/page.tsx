@@ -1,126 +1,143 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Users, Trophy, Timer, Zap, Play, RotateCcw, Medal, Crown } from "lucide-react"
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Users,
+  Trophy,
+  Timer,
+  Zap,
+  Play,
+  RotateCcw,
+  Medal,
+  Crown,
+} from "lucide-react";
 
-type GameState = "setup" | "playing" | "results"
-type GamePhase = "waiting" | "countdown" | "go" | "finished"
+type GameState = "setup" | "playing" | "results";
+type GamePhase = "waiting" | "countdown" | "go" | "finished";
 type Player = {
-  name: string
-  time?: number
-  accuracy?: number
-}
+  name: string;
+  time?: number;
+  accuracy?: number;
+};
 
 export default function SprintGame() {
-  const [gameState, setGameState] = useState<GameState>("setup")
-  const [gamePhase, setGamePhase] = useState<GamePhase>("waiting")
-  const [players, setPlayers] = useState<Player[]>([])
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0)
-  const [newPlayerName, setNewPlayerName] = useState("")
+  const [gameState, setGameState] = useState<GameState>("setup");
+  const [gamePhase, setGamePhase] = useState<GamePhase>("waiting");
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [newPlayerName, setNewPlayerName] = useState("");
 
-  const [startTime, setStartTime] = useState<number>(0)
-  const [playerTime, setPlayerTime] = useState<number>(0)
-  const [countdown, setCountdown] = useState<number>(0)
-  const [isListening, setIsListening] = useState<boolean>(false)
+  const [startTime, setStartTime] = useState<number>(0);
+  const [playerTime, setPlayerTime] = useState<number>(0);
+  const [countdown, setCountdown] = useState<number>(0);
+  const [isListening, setIsListening] = useState<boolean>(false);
 
   const handleKeyPress = useCallback(
     (event: KeyboardEvent) => {
       if (event.code === "Space" && isListening && gamePhase === "go") {
-        event.preventDefault()
-        const endTime = Date.now()
-        const timeTaken = endTime - startTime
-        setPlayerTime(timeTaken)
-        setGamePhase("finished")
-        setIsListening(false)
+        event.preventDefault();
+        const endTime = Date.now();
+        const timeTaken = endTime - startTime;
+        setPlayerTime(timeTaken);
+        setGamePhase("finished");
+        setIsListening(false);
 
         // Update current player's time
-        const updatedPlayers = [...players]
+        const updatedPlayers = [...players];
         updatedPlayers[currentPlayerIndex] = {
           ...updatedPlayers[currentPlayerIndex],
           time: timeTaken,
           accuracy: Math.abs(5000 - timeTaken),
-        }
-        setPlayers(updatedPlayers)
+        };
+        setPlayers(updatedPlayers);
       }
     },
-    [isListening, gamePhase, startTime, players, currentPlayerIndex],
-  )
+    [isListening, gamePhase, startTime, players, currentPlayerIndex]
+  );
 
   useEffect(() => {
     if (gameState === "playing") {
-      window.addEventListener("keydown", handleKeyPress)
-      return () => window.removeEventListener("keydown", handleKeyPress)
+      window.addEventListener("keydown", handleKeyPress);
+      return () => window.removeEventListener("keydown", handleKeyPress);
     }
-  }, [gameState, handleKeyPress])
+  }, [gameState, handleKeyPress]);
 
   const startPlayerTurn = () => {
-    setGamePhase("countdown")
-    setCountdown(3)
+    setGamePhase("countdown");
+    setCountdown(3);
 
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(countdownInterval)
-          setStartTime(Date.now())
-          setGamePhase("go")
-          setIsListening(true)
-          return 0
+          clearInterval(countdownInterval);
+          setStartTime(Date.now());
+          setGamePhase("go");
+          setIsListening(true);
+          return 0;
         }
-        return prev - 1
-      })
-    }, 1000)
-  }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const nextPlayer = () => {
     if (currentPlayerIndex < players.length - 1) {
-      setCurrentPlayerIndex(currentPlayerIndex + 1)
-      setGamePhase("waiting")
-      setPlayerTime(0)
+      setCurrentPlayerIndex(currentPlayerIndex + 1);
+      setGamePhase("waiting");
+      setPlayerTime(0);
     } else {
-      setGameState("results")
+      setGameState("results");
     }
-  }
+  };
 
   const restartGame = () => {
-    setGameState("setup")
-    setGamePhase("waiting")
-    setCurrentPlayerIndex(0)
-    setPlayers(players.map((player) => ({ name: player.name })))
-    setPlayerTime(0)
-  }
+    setGameState("setup");
+    setGamePhase("waiting");
+    setCurrentPlayerIndex(0);
+    setPlayers(players.map((player) => ({ name: player.name })));
+    setPlayerTime(0);
+  };
 
   const addPlayer = () => {
     if (newPlayerName.trim() && players.length < 8) {
-      setPlayers([...players, { name: newPlayerName.trim() }])
-      setNewPlayerName("")
+      setPlayers([...players, { name: newPlayerName.trim() }]);
+      setNewPlayerName("");
     }
-  }
+  };
 
   const removePlayer = (index: number) => {
-    setPlayers(players.filter((_, i) => i !== index))
-  }
+    setPlayers(players.filter((_, i) => i !== index));
+  };
 
   const startGame = () => {
     if (players.length >= 2) {
-      setGameState("playing")
-      setCurrentPlayerIndex(0)
+      setGameState("playing");
+      setCurrentPlayerIndex(0);
     }
-  }
+  };
 
   if (gameState === "playing") {
-    const currentPlayer = players[currentPlayerIndex]
+    const currentPlayer = players[currentPlayerIndex];
 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-4xl space-y-8">
           {/* Game Header */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-black text-foreground">SPRINT CHALLENGE</h1>
+            <h1 className="text-4xl font-black text-foreground">
+              SPRINT CHALLENGE
+            </h1>
             <div className="flex items-center justify-center gap-4">
               <Badge variant="outline" className="text-lg px-4 py-2">
                 Player {currentPlayerIndex + 1} of {players.length}
@@ -137,9 +154,12 @@ export default function SprintGame() {
               <div className="text-center space-y-8">
                 {gamePhase === "waiting" && (
                   <div className="space-y-6">
-                    <div className="text-6xl font-black text-primary mb-4">{currentPlayer.name}'s Turn</div>
+                    <div className="text-6xl font-black text-primary mb-4">
+                      {currentPlayer.name}'s Turn
+                    </div>
                     <p className="text-xl text-muted-foreground mb-8">
-                      Get ready! Press SPACEBAR exactly 5 seconds after "GO!" appears
+                      Get ready! Press SPACEBAR exactly 5 seconds after "GO!"
+                      appears
                     </p>
                     <Button
                       onClick={startPlayerTurn}
@@ -154,28 +174,48 @@ export default function SprintGame() {
 
                 {gamePhase === "countdown" && countdown > 0 && (
                   <div className="space-y-6">
-                    <div className="text-8xl font-black text-accent animate-pulse">{countdown}</div>
-                    <p className="text-xl text-muted-foreground">Get ready...</p>
+                    <div className="text-8xl font-black text-accent animate-pulse">
+                      {countdown}
+                    </div>
+                    <p className="text-xl text-muted-foreground">
+                      Get ready...
+                    </p>
                   </div>
                 )}
 
                 {gamePhase === "go" && (
                   <div className="space-y-6">
-                    <div className="text-9xl font-black text-destructive animate-bounce">GO!</div>
-                    <p className="text-2xl font-bold text-destructive animate-pulse">PRESS SPACEBAR NOW!</p>
-                    <div className="text-lg text-muted-foreground">Target: 5000ms exactly</div>
+                    <div className="text-9xl font-black text-destructive animate-bounce">
+                      GO!
+                    </div>
+                    <p className="text-2xl font-bold text-destructive animate-pulse">
+                      PRESS SPACEBAR NOW!
+                    </p>
+                    <div className="text-lg text-muted-foreground">
+                      Target: 5000ms exactly
+                    </div>
                   </div>
                 )}
 
                 {gamePhase === "finished" && (
                   <div className="space-y-6">
-                    <div className="text-6xl font-black text-primary">Time's Up!</div>
+                    <div className="text-6xl font-black text-primary">
+                      Time's Up!
+                    </div>
                     <div className="space-y-4">
                       <div className="text-4xl font-bold">{playerTime}ms</div>
-                      <div className="text-xl">Accuracy: {Math.abs(5000 - playerTime)}ms off target</div>
+                      <div className="text-xl">
+                        Accuracy: {Math.abs(5000 - playerTime)}ms off target
+                      </div>
                     </div>
-                    <Button onClick={nextPlayer} size="lg" className="text-xl font-black py-6 px-8">
-                      {currentPlayerIndex < players.length - 1 ? "Next Player" : "View Results"}
+                    <Button
+                      onClick={nextPlayer}
+                      size="lg"
+                      className="text-xl font-black py-6 px-8"
+                    >
+                      {currentPlayerIndex < players.length - 1
+                        ? "Next Player"
+                        : "View Results"}
                     </Button>
                   </div>
                 )}
@@ -192,13 +232,17 @@ export default function SprintGame() {
               </span>
             </div>
             <Progress
-              value={((currentPlayerIndex + (gamePhase === "finished" ? 1 : 0)) / players.length) * 100}
+              value={
+                ((currentPlayerIndex + (gamePhase === "finished" ? 1 : 0)) /
+                  players.length) *
+                100
+              }
               className="h-3"
             />
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (gameState === "setup") {
@@ -209,9 +253,13 @@ export default function SprintGame() {
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">
               <Zap className="h-12 w-12 text-primary" />
-              <h1 className="text-6xl font-black text-foreground tracking-tight">SPRINT</h1>
+              <h1 className="text-6xl font-black text-foreground tracking-tight">
+                SPRINT
+              </h1>
             </div>
-            <p className="text-xl text-muted-foreground font-medium">The Ultimate Timing Challenge</p>
+            <p className="text-xl text-muted-foreground font-medium">
+              The Ultimate Timing Challenge
+            </p>
             <Badge variant="secondary" className="text-lg px-4 py-2">
               <Timer className="h-4 w-4 mr-2" />
               Hit 5000ms Exactly!
@@ -225,7 +273,9 @@ export default function SprintGame() {
                 <Users className="h-8 w-8 text-primary" />
                 Player Setup
               </CardTitle>
-              <CardDescription className="text-lg">Add 2-8 players to start the competition</CardDescription>
+              <CardDescription className="text-lg">
+                Add 2-8 players to start the competition
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Add Player Input */}
@@ -251,7 +301,9 @@ export default function SprintGame() {
               {/* Players List */}
               {players.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-foreground">Players ({players.length}/8)</h3>
+                  <h3 className="text-xl font-bold text-foreground">
+                    Players ({players.length}/8)
+                  </h3>
                   <div className="grid gap-3">
                     {players.map((player, index) => (
                       <div
@@ -262,7 +314,9 @@ export default function SprintGame() {
                           <Badge variant="outline" className="font-bold">
                             {index + 1}
                           </Badge>
-                          <span className="text-lg font-semibold text-card-foreground">{player.name}</span>
+                          <span className="text-lg font-semibold text-card-foreground">
+                            {player.name}
+                          </span>
                         </div>
                         <Button
                           variant="destructive"
@@ -288,7 +342,11 @@ export default function SprintGame() {
                 >
                   <Trophy className="h-6 w-6 mr-3" />
                   Start Sprint Challenge
-                  {players.length < 2 && <span className="ml-2 text-sm opacity-75">(Need at least 2 players)</span>}
+                  {players.length < 2 && (
+                    <span className="ml-2 text-sm opacity-75">
+                      (Need at least 2 players)
+                    </span>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -311,42 +369,86 @@ export default function SprintGame() {
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   if (gameState === "results") {
     // Sort players by accuracy (closest to 5000ms wins)
     const sortedPlayers = [...players]
       .filter((player) => player.time !== undefined)
-      .sort((a, b) => (a.accuracy || Number.POSITIVE_INFINITY) - (b.accuracy || Number.POSITIVE_INFINITY))
+      .sort(
+        (a, b) =>
+          (a.accuracy || Number.POSITIVE_INFINITY) -
+          (b.accuracy || Number.POSITIVE_INFINITY)
+      );
 
-    const winner = sortedPlayers[0]
+    console.log(sortedPlayers);
+
+    // Get existing leaderboard (or empty if none)
+    const leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+    // Create a map to ensure uniqueness (using player.name as key, can be id if you have one)
+    const playerMap = new Map();
+
+    // Add existing players
+    leaderboard.forEach((player:any) => {
+      playerMap.set(player?.name, player);
+    });
+
+    // Add/Update with new results
+    sortedPlayers.forEach((player) => {
+      // If player already exists, keep the better accuracy (smaller value)
+      const existing = playerMap.get(player?.name);
+      if (!existing || player?.accuracy < existing?.accuracy) {
+        playerMap.set(player?.name, player);
+      }
+    });
+
+    // Convert map back to array
+    const updatedLeaderboard = Array.from(playerMap.values());
+
+    // Sort final leaderboard
+    updatedLeaderboard.sort(
+      (a, b) =>
+        (a.accuracy ?? Number.POSITIVE_INFINITY) -
+        (b.accuracy ?? Number.POSITIVE_INFINITY)
+    );
+
+    // Save updated leaderboard
+    localStorage.setItem("leaderboard", JSON.stringify(updatedLeaderboard));
+
+    // Winner = top player of this round
+    const winner = sortedPlayers[0];
 
     const getRankIcon = (index: number) => {
       switch (index) {
         case 0:
-          return <Crown className="h-6 w-6 text-yellow-500" />
+          return <Crown className="h-6 w-6 text-yellow-500" />;
         case 1:
-          return <Medal className="h-6 w-6 text-gray-400" />
+          return <Medal className="h-6 w-6 text-gray-400" />;
         case 2:
-          return <Medal className="h-6 w-6 text-amber-600" />
+          return <Medal className="h-6 w-6 text-amber-600" />;
         default:
-          return <span className="text-2xl font-bold text-muted-foreground">#{index + 1}</span>
+          return (
+            <span className="text-2xl font-bold text-muted-foreground">
+              #{index + 1}
+            </span>
+          );
       }
-    }
+    };
 
     const getRankColor = (index: number) => {
       switch (index) {
         case 0:
-          return "border-yellow-500/50 bg-yellow-500/10"
+          return "border-yellow-500/50 bg-yellow-500/10";
         case 1:
-          return "border-gray-400/50 bg-gray-400/10"
+          return "border-gray-400/50 bg-gray-400/10";
         case 2:
-          return "border-amber-600/50 bg-amber-600/10"
+          return "border-amber-600/50 bg-amber-600/10";
         default:
-          return "border-border bg-card"
+          return "border-border bg-card";
       }
-    }
+    };
 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -357,7 +459,9 @@ export default function SprintGame() {
               <Trophy className="h-16 w-16 text-yellow-500" />
               <div>
                 <h1 className="text-6xl font-black text-foreground">WINNER!</h1>
-                <p className="text-3xl font-bold text-primary mt-2">{winner.name}</p>
+                <p className="text-3xl font-bold text-primary mt-2">
+                  {winner.name}
+                </p>
               </div>
               <Trophy className="h-16 w-16 text-yellow-500" />
             </div>
@@ -370,43 +474,58 @@ export default function SprintGame() {
                 <Trophy className="h-8 w-8 text-primary" />
                 Final Leaderboard
               </CardTitle>
-              <CardDescription className="text-lg">Ranked by accuracy to 5000ms target</CardDescription>
+              <CardDescription className="text-lg">
+                Ranked by accuracy to 5000ms target
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {sortedPlayers.map((player, index) => (
                 <div
                   key={player.name}
-                  className={`flex items-center justify-between p-6 rounded-lg border-2 transition-all hover:scale-[1.02] ${getRankColor(index)}`}
+                  className={`flex items-center justify-between p-6 rounded-lg border-2 transition-all hover:scale-[1.02] ${getRankColor(
+                    index
+                  )}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12">{getRankIcon(index)}</div>
+                    <div className="flex items-center justify-center w-12 h-12">
+                      {getRankIcon(index)}
+                    </div>
                     <div>
-                      <h3 className="text-xl font-bold text-foreground">{player.name}</h3>
+                      <h3 className="text-xl font-bold text-foreground">
+                        {player.name}
+                      </h3>
                       <p className="text-sm text-muted-foreground">
                         {index === 0
                           ? "Champion"
                           : index === 1
-                            ? "Runner-up"
-                            : index === 2
-                              ? "Third place"
-                              : `${index + 1}th place`}
+                          ? "Runner-up"
+                          : index === 2
+                          ? "Third place"
+                          : `${index + 1}th place`}
                       </p>
                     </div>
                   </div>
 
                   <div className="text-right space-y-1">
-                    <div className="text-2xl font-bold text-foreground">{player.time}ms</div>
-                    <div className="text-sm text-muted-foreground">{player.accuracy}ms off target</div>
-                    <Badge variant={index === 0 ? "default" : "secondary"} className="text-xs">
+                    <div className="text-2xl font-bold text-foreground">
+                      {player.time}ms
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {player.accuracy}ms off target
+                    </div>
+                    <Badge
+                      variant={index === 0 ? "default" : "secondary"}
+                      className="text-xs"
+                    >
                       {player.accuracy! <= 50
                         ? "Perfect"
                         : player.accuracy! <= 100
-                          ? "Excellent"
-                          : player.accuracy! <= 250
-                            ? "Good"
-                            : player.accuracy! <= 500
-                              ? "Fair"
-                              : "Try again"}
+                        ? "Excellent"
+                        : player.accuracy! <= 250
+                        ? "Good"
+                        : player.accuracy! <= 500
+                        ? "Fair"
+                        : "Try again"}
                     </Badge>
                   </div>
                 </div>
@@ -427,9 +546,9 @@ export default function SprintGame() {
             </Button>
             <Button
               onClick={() => {
-                setGameState("setup")
-                setPlayers([])
-                setCurrentPlayerIndex(0)
+                setGameState("setup");
+                setPlayers([]);
+                setCurrentPlayerIndex(0);
               }}
               size="lg"
               className="text-xl font-black py-6 px-8 bg-primary hover:bg-primary/90"
@@ -440,12 +559,15 @@ export default function SprintGame() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
+  const leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+console.log(leaderboard)
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <p className="text-2xl font-bold">Game State: {gameState}</p>
     </div>
-  )
+  );
 }
