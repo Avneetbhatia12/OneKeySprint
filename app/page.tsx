@@ -86,16 +86,19 @@ export default function SprintGame() {
     }
   }
 
-  const restartGame = () => {
-    setGameState("playing")
-    setGamePhase("waiting")
-    setCurrentPlayerIndex(0)
-    setPlayers(players.map((player) => ({ name: player.name })))
-    setPlayerTime(0)
-    setStartTime(0)
-    setCountdown(0)
-    setIsListening(false)
-  }
+ 
+const restartGame = () => {
+  setGameState("setup")   // back to player entry
+  setPlayers([])          // clear all players
+  setCurrentPlayerIndex(0)
+  setPlayerTime(0)
+  setStartTime(0)
+  setCountdown(0)
+  setIsListening(false)
+  
+}
+
+
 
   const addPlayer = () => {
     if (newPlayerName.trim() && players.length < 8) {
@@ -108,12 +111,26 @@ export default function SprintGame() {
     setPlayers(players.filter((_, i) => i !== index))
   }
 
+  // const startGame = () => {
+  //   if (players.length >= 2) {
+  //     setGameState("playing")
+  //     setCurrentPlayerIndex(0)
+  //   }
+  // }
   const startGame = () => {
-    if (players.length >= 2) {
-      setGameState("playing")
-      setCurrentPlayerIndex(0)
-    }
+  if (players.length >= 2) {
+    // hard reset for a brand-new run
+    setCurrentPlayerIndex(0)
+    setPlayerTime(0)
+    setStartTime(0)
+    setCountdown(0)
+    setIsListening(false)
+
+    setGamePhase("waiting")   
+    setGameState("playing")
   }
+}
+
 
   if (gameState === "playing") {
     const currentPlayer = players[currentPlayerIndex]
