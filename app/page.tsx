@@ -111,12 +111,7 @@ const restartGame = () => {
     setPlayers(players.filter((_, i) => i !== index))
   }
 
-  // const startGame = () => {
-  //   if (players.length >= 2) {
-  //     setGameState("playing")
-  //     setCurrentPlayerIndex(0)
-  //   }
-  // }
+ 
   const startGame = () => {
   if (players.length >= 2) {
     // hard reset for a brand-new run
@@ -356,6 +351,7 @@ const restartGame = () => {
       .sort((a, b) => (a.accuracy || Number.POSITIVE_INFINITY) - (b.accuracy || Number.POSITIVE_INFINITY))
 
     const winner = sortedPlayers[0]
+
 
     const getRankIcon = (index: number) => {
       switch (index) {
