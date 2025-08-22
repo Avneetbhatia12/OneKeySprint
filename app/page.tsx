@@ -1,6 +1,6 @@
-/*eslint-disable*/
-"use client"
 
+"use client"
+/*eslint-disable*/
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,6 +52,25 @@ export default function SprintGame() {
     [isListening, gamePhase, startTime, players, currentPlayerIndex],
   )
 
+  const handleButtonPress = () => {
+    if (isListening && gamePhase === "go") {
+      const endTime = Date.now()
+      const timeTaken = endTime - startTime
+      setPlayerTime(timeTaken)
+      setGamePhase("finished")
+      setIsListening(false)
+
+      // Update current player's time
+      const updatedPlayers = [...players]
+      updatedPlayers[currentPlayerIndex] = {
+        ...updatedPlayers[currentPlayerIndex],
+        time: timeTaken,
+        accuracy: Math.abs(5000 - timeTaken),
+      }
+      setPlayers(updatedPlayers)
+    }
+  }
+
   useEffect(() => {
     if (gameState === "playing") {
       window.addEventListener("keydown", handleKeyPress)
@@ -78,28 +97,45 @@ export default function SprintGame() {
   }
 
   const nextPlayer = () => {
+    console.log("[v0] Next player called - current index:", currentPlayerIndex, "total players:", players.length)
+
     if (currentPlayerIndex < players.length - 1) {
-      setCurrentPlayerIndex(currentPlayerIndex + 1)
+      const nextIndex = currentPlayerIndex + 1
+      console.log("[v0] Moving to player index:", nextIndex)
+      setCurrentPlayerIndex(nextIndex)
       setGamePhase("waiting")
       setPlayerTime(0)
     } else {
+      console.log("[v0] All players finished, going to results")
       setGameState("results")
     }
   }
 
- 
-const restartGame = () => {
-  setGameState("setup")   // back to player entry
-  setPlayers([])          // clear all players
-  setCurrentPlayerIndex(0)
-  setPlayerTime(0)
-  setStartTime(0)
-  setCountdown(0)
-  setIsListening(false)
-  
-}
+  const restartGame = () => {
+    console.log("[v0] Restarting game - current players:", players.length)
+    console.log(
+      "[v0] Current player names:",
+      players.map((p) => p.name),
+    )
+    console.log("[v0] Current player index before restart:", currentPlayerIndex)
 
+    const currentPlayers = [...players]
 
+    setGameState("playing")
+    setGamePhase("waiting")
+    setCurrentPlayerIndex(0)
+    setPlayers(currentPlayers.map((player) => ({ name: player.name })))
+    setPlayerTime(0)
+    setStartTime(0)
+    setCountdown(0)
+    setIsListening(false)
+
+    console.log("[v0] After restart - should be player index 0")
+    console.log(
+      "[v0] Restarted with players:",
+      currentPlayers.map((p) => p.name),
+    )
+  }
 
   const addPlayer = () => {
     if (newPlayerName.trim() && players.length < 8) {
@@ -112,24 +148,17 @@ const restartGame = () => {
     setPlayers(players.filter((_, i) => i !== index))
   }
 
- 
   const startGame = () => {
-  if (players.length >= 2) {
-    // hard reset for a brand-new run
-    setCurrentPlayerIndex(0)
-    setPlayerTime(0)
-    setStartTime(0)
-    setCountdown(0)
-    setIsListening(false)
-
-    setGamePhase("waiting")   
-    setGameState("playing")
+    if (players.length >= 2) {
+      setGameState("playing")
+      setCurrentPlayerIndex(0)
+    }
   }
-}
-
 
   if (gameState === "playing") {
     const currentPlayer = players[currentPlayerIndex]
+
+    console.log("[v0] Playing state - current player index:", currentPlayerIndex, "player:", currentPlayer?.name)
 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-2 sm:p-4">
@@ -181,10 +210,20 @@ const restartGame = () => {
                 )}
 
                 {gamePhase === "go" && (
-                  <div className="space-y-4 sm:space-y-6">
-                    <div className="text-7xl sm:text-9xl font-black text-destructive animate-bounce">GO!</div>
-                    <p className="text-xl sm:text-2xl font-bold text-destructive animate-pulse">PRESS SPACEBAR NOW!</p>
-                    <div className="text-base sm:text-lg text-muted-foreground">Target: 5000ms exactly</div>
+                  <div className="space-y-2 sm:space-y-4">
+                    <div className="text-6xl sm:text-8xl font-black text-destructive animate-bounce">GO!</div>
+                    <p className="text-lg sm:text-xl font-bold text-destructive animate-pulse">PRESS SPACEBAR NOW!</p>
+                    <div className="text-sm sm:text-base text-muted-foreground">Target: 5000ms exactly</div>
+
+                    <div>
+                      <Button
+                        onClick={handleButtonPress}
+                        size="lg"
+                        className="text-xl sm:text-2xl font-black py-4 sm:py-6 px-6 sm:px-10 bg-destructive hover:bg-destructive/90 text-destructive-foreground w-full sm:w-auto"
+                      >
+                        TAP NOW!
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -352,7 +391,6 @@ const restartGame = () => {
       .sort((a, b) => (a.accuracy || Number.POSITIVE_INFINITY) - (b.accuracy || Number.POSITIVE_INFINITY))
 
     const winner = sortedPlayers[0]
-
 
     const getRankIcon = (index: number) => {
       switch (index) {
